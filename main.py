@@ -19,6 +19,7 @@ class InfoDetails(BaseModel):
 
 
 class ResponseModel(BaseModel):
+    allowed: bool
     message: str
     info: InfoDetails
 
