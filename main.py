@@ -122,10 +122,15 @@ async def check_country(ip: str):
                     detail={
                         "message": f"Access restricted for your country {country}.",
                         "info": data,
+                        "allowed": False,
                     },
                 )
 
-            return {"message": "Access allowed.", "info": data}
+            return {
+                "message": "Access allowed.",
+                "info": data,
+                "allowed": True,
+            }
 
         except HTTPException as e:
             raise e  # Re-raise HTTPException to let FastAPI handle it
