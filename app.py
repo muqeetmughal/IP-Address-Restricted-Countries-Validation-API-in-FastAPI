@@ -97,25 +97,40 @@ async def get_country_by_ip(ip: str) -> dict:
         )
 
 
-@app.post("/check_country", response_model=ResponseModel)
-async def check_country(request: IPAddressValidator):
+@app.get("/check_country", response_model=ResponseModel)
+async def check_country(ip: str):
     try:
-        data = await get_country_by_ip(request.ip_address)
-        del data['readme']
-
-        country = data.get("country", "")
-        if country in RESTRICTED_COUNTRIES:
+        ip_parts = ip.split(".")
+        if len(ip_parts) != 4:
             raise HTTPException(
-                status_code=403,
-                detail={
-                    "message": f"Access restricted for your country {country}.",
-                    "info": data,
-                },
+                status_code=400, detail=str("Invalid IP address format")
             )
 
-        return {"message": "Access allowed.", "info": data}
+        for part in ip_parts:
+            if not 0 <= int(part) <= 255:
+                raise HTTPException(
+                    status_code=400, detail=str("Invalid IP address format")
+                )
+        try:
+            data = await get_country_by_ip(ip)
+            del data["readme"]
 
-    except HTTPException as e:
-        raise e  # Re-raise HTTPException to let FastAPI handle it
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+            country = data.get("country", "")
+            if country in RESTRICTED_COUNTRIES:
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "message": f"Access restricted for your country {country}.",
+                        "info": data,
+                    },
+                )
+
+            return {"message": "Access allowed.", "info": data}
+
+        except HTTPException as e:
+            raise e  # Re-raise HTTPException to let FastAPI handle it
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    except ValueError as e:
+        raise ValueError(f"Invalid IP address format: {e}")
