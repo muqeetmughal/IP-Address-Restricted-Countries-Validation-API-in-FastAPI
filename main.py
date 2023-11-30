@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 import httpx
 from pydantic import BaseModel, ValidationError, validator
 from typing import Union
@@ -80,6 +80,13 @@ RESTRICTED_COUNTRIES = [
     "UA",  # Ukraine
     "RU",  # Russia
 ]
+
+
+@app.get("/")
+async def validate_ip(request: Request):
+    client_host = request.client.host
+    print(client_host)
+    return client_host
 
 
 async def get_country_by_ip(ip: str) -> dict:
