@@ -1,22 +1,10 @@
 from fastapi import FastAPI, HTTPException, Request
 import httpx
-from pydantic import BaseModel, validator
-from aiogram import Bot
+from pydantic import BaseModel, ValidationError, validator
+from typing import Union
 
-from typing import Optional
 
 app = FastAPI()
-
-
-async def send_message(chat_id, text):
-    try:
-        await bot.send_message(chat_id=chat_id, text=text)
-    except Exception as e:
-        print(f"Error sending message: {e}")
-
-
-# Инициализация бота Aiogram
-bot = Bot(token="5343231561:AAFh92sQYM8bJH4rB6Aiik6pu0Q2C5O0_sU")
 
 
 class InfoDetails(BaseModel):
@@ -95,17 +83,13 @@ RESTRICTED_COUNTRIES = [
 
 
 @app.get("/validate")
-async def validate_ip(
-    request: Request, user_id: Optional[str] = None, state: Optional[str] = None
-):
-    print(user_id, state)
+async def validate_ip(request: Request):
     ip = request.client.host
     try:
         data = await get_country_by_ip(ip)
         del data["readme"]
 
         country = data.get("country", "")
-
         if country in RESTRICTED_COUNTRIES:
             raise HTTPException(
                 status_code=403,
@@ -172,7 +156,7 @@ async def check_country(ip: str):
                         "allowed": False,
                     },
                 )
-            await send_message(chat_id=556907227, text="Сообщение для бота")
+
             return {
                 "message": "Access allowed.",
                 "info": data,
@@ -186,16 +170,3 @@ async def check_country(ip: str):
 
     except ValueError as e:
         raise ValueError(f"Invalid IP address format: {e}")
-
-
-class ValidationResult(BaseModel):
-    result: bool
-    details: str  # Можно добавить дополнительные поля по необходимости
-
-
-@app.post("/webapp_result")
-async def receive_webapp_result(validation_result: ValidationResult):
-    # Обработка полученных данных
-    print("Received data from webapp:", validation_result)
-    # Можете добавить здесь логику для обработки данных
-    return {"message": "Data received successfully"}
